@@ -1,0 +1,80 @@
+import Link from "next/link";
+import { TaskType } from "../types/TaskType";
+import Cookies from "universal-cookie";
+import axios, { AxiosResponse } from "axios";
+import { Mutator } from "swr/dist/types";
+import { useContext } from "react";
+import { StateContext } from "../context/StateContext";
+
+const cookie: Cookies = new Cookies();
+
+type Props = {
+  task: TaskType;
+  taskDeleted: any;
+};
+export const Task = (props: Props): JSX.Element => {
+  const { task, taskDeleted } = props;
+  const { selectedTask, setSelectedTask } = useContext(StateContext)!;
+
+  const deleteTask = async () => {
+    await axios
+      .delete(`${process.env.NEXT_PUBLIC_RESTAPI_URL}api/tasks/${task.id}`, {
+        headers: {
+          Authorization: `JWT ${cookie.get("access_token")}`,
+        },
+      })
+      .then((res: AxiosResponse) => {
+        if (res.status === 401) {
+          alert("JWT Token not valid");
+        }
+      });
+
+    taskDeleted();
+  };
+
+  return (
+    <div>
+      <span>{task.id}</span>
+      {" : "}
+      <Link href={`/tasks/${task.id}`} passHref>
+        <span className="cursor-pointer text-white border-b border-gray-500 hover:bg-gray-600">
+          {task.title}
+        </span>
+      </Link>
+      <div className="float-right ml-20">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className="h-6 w-6 float-left cursor-pointer"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={2}
+          onClick={() =>
+            setSelectedTask({ id: Number(task.id), title: task.title })
+          }
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+          />
+        </svg>
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className="h-6 w-6 mr-2 cursor-pointer"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={2}
+          onClick={deleteTask}
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+          />
+        </svg>
+      </div>
+    </div>
+  );
+};
